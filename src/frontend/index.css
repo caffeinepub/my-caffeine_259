@@ -1,0 +1,230 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fraunces — Display (spiritual, editorial) */
+@font-face {
+  font-family: "Fraunces";
+  src: url("/assets/fonts/Fraunces.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* General Sans — Body (clean, readable) */
+@font-face {
+  font-family: "General Sans";
+  src: url("/assets/fonts/GeneralSans-Variable.woff2") format("woff2");
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Sora — Hindi accent / subheadings */
+@font-face {
+  font-family: "Sora";
+  src: url("/assets/fonts/Sora.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+
+    /* Saffron / Turmeric warm palette */
+    --background: 0.98 0.012 85;
+    --foreground: 0.18 0.04 50;
+
+    /* Cards: warm cream */
+    --card: 0.97 0.016 80;
+    --card-foreground: 0.18 0.04 50;
+
+    --popover: 0.97 0.016 80;
+    --popover-foreground: 0.18 0.04 50;
+
+    /* Primary: deep saffron/turmeric */
+    --primary: 0.62 0.19 55;
+    --primary-foreground: 0.99 0 0;
+
+    /* Secondary: forest green */
+    --secondary: 0.38 0.12 145;
+    --secondary-foreground: 0.99 0 0;
+
+    /* Muted: warm sand */
+    --muted: 0.93 0.022 75;
+    --muted-foreground: 0.52 0.06 60;
+
+    /* Accent: vibrant saffron */
+    --accent: 0.72 0.22 60;
+    --accent-foreground: 0.12 0.04 50;
+
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+
+    --border: 0.88 0.04 70;
+    --input: 0.88 0.04 70;
+    --ring: 0.62 0.19 55;
+
+    /* Chart colors: yoga-themed */
+    --chart-1: 0.72 0.22 60;
+    --chart-2: 0.38 0.12 145;
+    --chart-3: 0.62 0.19 55;
+    --chart-4: 0.55 0.16 30;
+    --chart-5: 0.65 0.18 170;
+
+    --sidebar: 0.98 0.012 85;
+    --sidebar-foreground: 0.18 0.04 50;
+    --sidebar-primary: 0.62 0.19 55;
+    --sidebar-primary-foreground: 0.99 0 0;
+    --sidebar-accent: 0.93 0.022 75;
+    --sidebar-accent-foreground: 0.18 0.04 50;
+    --sidebar-border: 0.88 0.04 70;
+    --sidebar-ring: 0.62 0.19 55;
+
+    /* Custom tokens */
+    --saffron: 0.72 0.22 60;
+    --saffron-deep: 0.58 0.20 48;
+    --saffron-light: 0.88 0.14 75;
+    --forest: 0.38 0.12 145;
+    --forest-light: 0.55 0.14 148;
+    --cream: 0.98 0.014 90;
+    --earth: 0.55 0.10 60;
+    --gold: 0.78 0.16 75;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+    font-feature-settings: "kern" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: "Fraunces", serif;
+    font-weight: 700;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: "Fraunces", serif;
+  }
+
+  .font-body {
+    font-family: "General Sans", sans-serif;
+  }
+
+  .font-hindi {
+    font-family: "Sora", "Noto Sans Devanagari", sans-serif;
+  }
+
+  .bg-saffron {
+    background-color: oklch(var(--saffron));
+  }
+
+  .bg-saffron-deep {
+    background-color: oklch(var(--saffron-deep));
+  }
+
+  .bg-saffron-light {
+    background-color: oklch(var(--saffron-light));
+  }
+
+  .bg-forest {
+    background-color: oklch(var(--forest));
+  }
+
+  .bg-forest-light {
+    background-color: oklch(var(--forest-light));
+  }
+
+  .bg-cream {
+    background-color: oklch(var(--cream));
+  }
+
+  .text-saffron {
+    color: oklch(var(--saffron));
+  }
+
+  .text-saffron-deep {
+    color: oklch(var(--saffron-deep));
+  }
+
+  .text-forest {
+    color: oklch(var(--forest));
+  }
+
+  .text-forest-light {
+    color: oklch(var(--forest-light));
+  }
+
+  .text-earth {
+    color: oklch(var(--earth));
+  }
+
+  .text-gold {
+    color: oklch(var(--gold));
+  }
+
+  .border-saffron {
+    border-color: oklch(var(--saffron));
+  }
+
+  .border-forest {
+    border-color: oklch(var(--forest));
+  }
+
+  .shadow-saffron {
+    box-shadow: 0 4px 24px oklch(var(--saffron) / 0.25);
+  }
+
+  .mandala-bg {
+    background-image: radial-gradient(
+      circle at 50% 50%,
+      oklch(var(--saffron-light) / 0.4) 0%,
+      oklch(var(--cream)) 70%
+    );
+  }
+
+  .hero-overlay {
+    background: linear-gradient(
+      to bottom,
+      oklch(var(--saffron-deep) / 0.7) 0%,
+      oklch(0.12 0.04 50 / 0.65) 100%
+    );
+  }
+
+  .section-divider {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      oklch(var(--saffron)),
+      oklch(var(--forest)),
+      transparent
+    );
+    height: 2px;
+  }
+
+  .grain-texture {
+    position: relative;
+  }
+
+  .grain-texture::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+    border-radius: inherit;
+  }
+}
