@@ -10,16 +10,79 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface AdmissionEntry {
+  'contact' : string,
+  'dateOfBirth' : string,
+  'yogaCode' : string,
+  'name' : string,
+  'submittedAt' : bigint,
+  'idProof' : string,
+  'email' : string,
+  'idProofFileUrl' : [] | [ExternalBlob],
+  'address' : string,
+}
+export interface AttendanceRecord { 'present' : boolean, 'yogaCode' : string }
 export interface CampInfo {
   'timing' : string,
   'instructor' : string,
   'name' : string,
   'location' : string,
 }
+export type ExternalBlob = Uint8Array;
+export interface _CaffeineStorageCreateCertificateResult {
+  'method' : string,
+  'blob_hash' : string,
+}
+export interface _CaffeineStorageRefillInformation {
+  'proposed_top_up_amount' : [] | [bigint],
+}
+export interface _CaffeineStorageRefillResult {
+  'success' : [] | [boolean],
+  'topped_up_amount' : [] | [bigint],
+}
 export interface _SERVICE {
+  '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
+  '_caffeineStorageBlobsToDelete' : ActorMethod<[], Array<Uint8Array>>,
+  '_caffeineStorageConfirmBlobDeletion' : ActorMethod<
+    [Array<Uint8Array>],
+    undefined
+  >,
+  '_caffeineStorageCreateCertificate' : ActorMethod<
+    [string],
+    _CaffeineStorageCreateCertificateResult
+  >,
+  '_caffeineStorageRefillCashier' : ActorMethod<
+    [[] | [_CaffeineStorageRefillInformation]],
+    _CaffeineStorageRefillResult
+  >,
+  '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   'addCamp' : ActorMethod<[string, string, string, string], undefined>,
+  'getAdmissionCount' : ActorMethod<[], bigint>,
+  'getAllAdmissions' : ActorMethod<[string, string], Array<AdmissionEntry>>,
   'getAllCamps' : ActorMethod<[], Array<CampInfo>>,
+  /**
+   * / New: Get attendance records for a specific date
+   */
+  'getAttendance' : ActorMethod<
+    [string, string, string],
+    Array<AttendanceRecord>
+  >,
+  /**
+   * / New: Get all dates with saved attendance records
+   */
+  'getAttendanceDates' : ActorMethod<[string, string], Array<string>>,
   'getCamp' : ActorMethod<[string], CampInfo>,
+  /**
+   * / New: Save attendance records for a specific date
+   */
+  'saveAttendance' : ActorMethod<
+    [string, Array<[string, boolean]>, string, string],
+    undefined
+  >,
+  'submitAdmission' : ActorMethod<
+    [string, string, string, string, string, string, [] | [ExternalBlob]],
+    string
+  >,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

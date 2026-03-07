@@ -8,33 +8,207 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
+export const _CaffeineStorageCreateCertificateResult = IDL.Record({
+  'method' : IDL.Text,
+  'blob_hash' : IDL.Text,
+});
+export const _CaffeineStorageRefillInformation = IDL.Record({
+  'proposed_top_up_amount' : IDL.Opt(IDL.Nat),
+});
+export const _CaffeineStorageRefillResult = IDL.Record({
+  'success' : IDL.Opt(IDL.Bool),
+  'topped_up_amount' : IDL.Opt(IDL.Nat),
+});
+export const ExternalBlob = IDL.Vec(IDL.Nat8);
+export const AdmissionEntry = IDL.Record({
+  'contact' : IDL.Text,
+  'dateOfBirth' : IDL.Text,
+  'yogaCode' : IDL.Text,
+  'name' : IDL.Text,
+  'submittedAt' : IDL.Int,
+  'idProof' : IDL.Text,
+  'email' : IDL.Text,
+  'idProofFileUrl' : IDL.Opt(ExternalBlob),
+  'address' : IDL.Text,
+});
 export const CampInfo = IDL.Record({
   'timing' : IDL.Text,
   'instructor' : IDL.Text,
   'name' : IDL.Text,
   'location' : IDL.Text,
 });
+export const AttendanceRecord = IDL.Record({
+  'present' : IDL.Bool,
+  'yogaCode' : IDL.Text,
+});
 
 export const idlService = IDL.Service({
+  '_caffeineStorageBlobIsLive' : IDL.Func(
+      [IDL.Vec(IDL.Nat8)],
+      [IDL.Bool],
+      ['query'],
+    ),
+  '_caffeineStorageBlobsToDelete' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Vec(IDL.Nat8))],
+      ['query'],
+    ),
+  '_caffeineStorageConfirmBlobDeletion' : IDL.Func(
+      [IDL.Vec(IDL.Vec(IDL.Nat8))],
+      [],
+      [],
+    ),
+  '_caffeineStorageCreateCertificate' : IDL.Func(
+      [IDL.Text],
+      [_CaffeineStorageCreateCertificateResult],
+      [],
+    ),
+  '_caffeineStorageRefillCashier' : IDL.Func(
+      [IDL.Opt(_CaffeineStorageRefillInformation)],
+      [_CaffeineStorageRefillResult],
+      [],
+    ),
+  '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   'addCamp' : IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text], [], []),
+  'getAdmissionCount' : IDL.Func([], [IDL.Nat], ['query']),
+  'getAllAdmissions' : IDL.Func(
+      [IDL.Text, IDL.Text],
+      [IDL.Vec(AdmissionEntry)],
+      ['query'],
+    ),
   'getAllCamps' : IDL.Func([], [IDL.Vec(CampInfo)], ['query']),
+  'getAttendance' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text],
+      [IDL.Vec(AttendanceRecord)],
+      ['query'],
+    ),
+  'getAttendanceDates' : IDL.Func(
+      [IDL.Text, IDL.Text],
+      [IDL.Vec(IDL.Text)],
+      ['query'],
+    ),
   'getCamp' : IDL.Func([IDL.Text], [CampInfo], ['query']),
+  'saveAttendance' : IDL.Func(
+      [IDL.Text, IDL.Vec(IDL.Tuple(IDL.Text, IDL.Bool)), IDL.Text, IDL.Text],
+      [],
+      [],
+    ),
+  'submitAdmission' : IDL.Func(
+      [
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Text,
+        IDL.Opt(ExternalBlob),
+      ],
+      [IDL.Text],
+      [],
+    ),
 });
 
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
+  const _CaffeineStorageCreateCertificateResult = IDL.Record({
+    'method' : IDL.Text,
+    'blob_hash' : IDL.Text,
+  });
+  const _CaffeineStorageRefillInformation = IDL.Record({
+    'proposed_top_up_amount' : IDL.Opt(IDL.Nat),
+  });
+  const _CaffeineStorageRefillResult = IDL.Record({
+    'success' : IDL.Opt(IDL.Bool),
+    'topped_up_amount' : IDL.Opt(IDL.Nat),
+  });
+  const ExternalBlob = IDL.Vec(IDL.Nat8);
+  const AdmissionEntry = IDL.Record({
+    'contact' : IDL.Text,
+    'dateOfBirth' : IDL.Text,
+    'yogaCode' : IDL.Text,
+    'name' : IDL.Text,
+    'submittedAt' : IDL.Int,
+    'idProof' : IDL.Text,
+    'email' : IDL.Text,
+    'idProofFileUrl' : IDL.Opt(ExternalBlob),
+    'address' : IDL.Text,
+  });
   const CampInfo = IDL.Record({
     'timing' : IDL.Text,
     'instructor' : IDL.Text,
     'name' : IDL.Text,
     'location' : IDL.Text,
   });
+  const AttendanceRecord = IDL.Record({
+    'present' : IDL.Bool,
+    'yogaCode' : IDL.Text,
+  });
   
   return IDL.Service({
+    '_caffeineStorageBlobIsLive' : IDL.Func(
+        [IDL.Vec(IDL.Nat8)],
+        [IDL.Bool],
+        ['query'],
+      ),
+    '_caffeineStorageBlobsToDelete' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Vec(IDL.Nat8))],
+        ['query'],
+      ),
+    '_caffeineStorageConfirmBlobDeletion' : IDL.Func(
+        [IDL.Vec(IDL.Vec(IDL.Nat8))],
+        [],
+        [],
+      ),
+    '_caffeineStorageCreateCertificate' : IDL.Func(
+        [IDL.Text],
+        [_CaffeineStorageCreateCertificateResult],
+        [],
+      ),
+    '_caffeineStorageRefillCashier' : IDL.Func(
+        [IDL.Opt(_CaffeineStorageRefillInformation)],
+        [_CaffeineStorageRefillResult],
+        [],
+      ),
+    '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     'addCamp' : IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text], [], []),
+    'getAdmissionCount' : IDL.Func([], [IDL.Nat], ['query']),
+    'getAllAdmissions' : IDL.Func(
+        [IDL.Text, IDL.Text],
+        [IDL.Vec(AdmissionEntry)],
+        ['query'],
+      ),
     'getAllCamps' : IDL.Func([], [IDL.Vec(CampInfo)], ['query']),
+    'getAttendance' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text],
+        [IDL.Vec(AttendanceRecord)],
+        ['query'],
+      ),
+    'getAttendanceDates' : IDL.Func(
+        [IDL.Text, IDL.Text],
+        [IDL.Vec(IDL.Text)],
+        ['query'],
+      ),
     'getCamp' : IDL.Func([IDL.Text], [CampInfo], ['query']),
+    'saveAttendance' : IDL.Func(
+        [IDL.Text, IDL.Vec(IDL.Tuple(IDL.Text, IDL.Bool)), IDL.Text, IDL.Text],
+        [],
+        [],
+      ),
+    'submitAdmission' : IDL.Func(
+        [
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Text,
+          IDL.Opt(ExternalBlob),
+        ],
+        [IDL.Text],
+        [],
+      ),
   });
 };
 

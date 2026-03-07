@@ -89,19 +89,151 @@ export class ExternalBlob {
         return this;
     }
 }
+export interface AdmissionEntry {
+    contact: string;
+    dateOfBirth: string;
+    yogaCode: string;
+    name: string;
+    submittedAt: bigint;
+    idProof: string;
+    email: string;
+    idProofFileUrl?: ExternalBlob;
+    address: string;
+}
+export interface _CaffeineStorageRefillInformation {
+    proposed_top_up_amount?: bigint;
+}
 export interface CampInfo {
     timing: string;
     instructor: string;
     name: string;
     location: string;
 }
-export interface backendInterface {
-    addCamp(name: string, location: string, timing: string, instructor: string): Promise<void>;
-    getAllCamps(): Promise<Array<CampInfo>>;
-    getCamp(name: string): Promise<CampInfo>;
+export interface _CaffeineStorageCreateCertificateResult {
+    method: string;
+    blob_hash: string;
 }
+export interface AttendanceRecord {
+    present: boolean;
+    yogaCode: string;
+}
+export interface _CaffeineStorageRefillResult {
+    success?: boolean;
+    topped_up_amount?: bigint;
+}
+export interface backendInterface {
+    _caffeineStorageBlobIsLive(hash: Uint8Array): Promise<boolean>;
+    _caffeineStorageBlobsToDelete(): Promise<Array<Uint8Array>>;
+    _caffeineStorageConfirmBlobDeletion(blobs: Array<Uint8Array>): Promise<void>;
+    _caffeineStorageCreateCertificate(blobHash: string): Promise<_CaffeineStorageCreateCertificateResult>;
+    _caffeineStorageRefillCashier(refillInformation: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult>;
+    _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
+    addCamp(name: string, location: string, timing: string, instructor: string): Promise<void>;
+    getAdmissionCount(): Promise<bigint>;
+    getAllAdmissions(username: string, password: string): Promise<Array<AdmissionEntry>>;
+    getAllCamps(): Promise<Array<CampInfo>>;
+    /**
+     * / New: Get attendance records for a specific date
+     */
+    getAttendance(date: string, username: string, password: string): Promise<Array<AttendanceRecord>>;
+    /**
+     * / New: Get all dates with saved attendance records
+     */
+    getAttendanceDates(username: string, password: string): Promise<Array<string>>;
+    getCamp(name: string): Promise<CampInfo>;
+    /**
+     * / New: Save attendance records for a specific date
+     */
+    saveAttendance(date: string, records: Array<[string, boolean]>, username: string, password: string): Promise<void>;
+    submitAdmission(name: string, address: string, contact: string, email: string, dateOfBirth: string, idProof: string, idProofFileUrl: ExternalBlob | null): Promise<string>;
+}
+import type { AdmissionEntry as _AdmissionEntry, ExternalBlob as _ExternalBlob, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
+    async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor._caffeineStorageBlobIsLive(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor._caffeineStorageBlobIsLive(arg0);
+            return result;
+        }
+    }
+    async _caffeineStorageBlobsToDelete(): Promise<Array<Uint8Array>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor._caffeineStorageBlobsToDelete();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor._caffeineStorageBlobsToDelete();
+            return result;
+        }
+    }
+    async _caffeineStorageConfirmBlobDeletion(arg0: Array<Uint8Array>): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor._caffeineStorageConfirmBlobDeletion(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor._caffeineStorageConfirmBlobDeletion(arg0);
+            return result;
+        }
+    }
+    async _caffeineStorageCreateCertificate(arg0: string): Promise<_CaffeineStorageCreateCertificateResult> {
+        if (this.processError) {
+            try {
+                const result = await this.actor._caffeineStorageCreateCertificate(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor._caffeineStorageCreateCertificate(arg0);
+            return result;
+        }
+    }
+    async _caffeineStorageRefillCashier(arg0: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult> {
+        if (this.processError) {
+            try {
+                const result = await this.actor._caffeineStorageRefillCashier(to_candid_opt_n1(this._uploadFile, this._downloadFile, arg0));
+                return from_candid__CaffeineStorageRefillResult_n4(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor._caffeineStorageRefillCashier(to_candid_opt_n1(this._uploadFile, this._downloadFile, arg0));
+            return from_candid__CaffeineStorageRefillResult_n4(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async _caffeineStorageUpdateGatewayPrincipals(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor._caffeineStorageUpdateGatewayPrincipals();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor._caffeineStorageUpdateGatewayPrincipals();
+            return result;
+        }
+    }
     async addCamp(arg0: string, arg1: string, arg2: string, arg3: string): Promise<void> {
         if (this.processError) {
             try {
@@ -116,6 +248,34 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getAdmissionCount(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAdmissionCount();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAdmissionCount();
+            return result;
+        }
+    }
+    async getAllAdmissions(arg0: string, arg1: string): Promise<Array<AdmissionEntry>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllAdmissions(arg0, arg1);
+                return from_candid_vec_n8(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllAdmissions(arg0, arg1);
+            return from_candid_vec_n8(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getAllCamps(): Promise<Array<CampInfo>> {
         if (this.processError) {
             try {
@@ -127,6 +287,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getAllCamps();
+            return result;
+        }
+    }
+    async getAttendance(arg0: string, arg1: string, arg2: string): Promise<Array<AttendanceRecord>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAttendance(arg0, arg1, arg2);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAttendance(arg0, arg1, arg2);
+            return result;
+        }
+    }
+    async getAttendanceDates(arg0: string, arg1: string): Promise<Array<string>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAttendanceDates(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAttendanceDates(arg0, arg1);
             return result;
         }
     }
@@ -144,6 +332,121 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async saveAttendance(arg0: string, arg1: Array<[string, boolean]>, arg2: string, arg3: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.saveAttendance(arg0, arg1, arg2, arg3);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.saveAttendance(arg0, arg1, arg2, arg3);
+            return result;
+        }
+    }
+    async submitAdmission(arg0: string, arg1: string, arg2: string, arg3: string, arg4: string, arg5: string, arg6: ExternalBlob | null): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.submitAdmission(arg0, arg1, arg2, arg3, arg4, arg5, await to_candid_opt_n13(this._uploadFile, this._downloadFile, arg6));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.submitAdmission(arg0, arg1, arg2, arg3, arg4, arg5, await to_candid_opt_n13(this._uploadFile, this._downloadFile, arg6));
+            return result;
+        }
+    }
+}
+async function from_candid_AdmissionEntry_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _AdmissionEntry): Promise<AdmissionEntry> {
+    return await from_candid_record_n10(_uploadFile, _downloadFile, value);
+}
+async function from_candid_ExternalBlob_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ExternalBlob): Promise<ExternalBlob> {
+    return await _downloadFile(value);
+}
+function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __CaffeineStorageRefillResult): _CaffeineStorageRefillResult {
+    return from_candid_record_n5(_uploadFile, _downloadFile, value);
+}
+async function from_candid_opt_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ExternalBlob]): Promise<ExternalBlob | null> {
+    return value.length === 0 ? null : await from_candid_ExternalBlob_n12(_uploadFile, _downloadFile, value[0]);
+}
+function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
+    return value.length === 0 ? null : value[0];
+}
+async function from_candid_record_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    contact: string;
+    dateOfBirth: string;
+    yogaCode: string;
+    name: string;
+    submittedAt: bigint;
+    idProof: string;
+    email: string;
+    idProofFileUrl: [] | [_ExternalBlob];
+    address: string;
+}): Promise<{
+    contact: string;
+    dateOfBirth: string;
+    yogaCode: string;
+    name: string;
+    submittedAt: bigint;
+    idProof: string;
+    email: string;
+    idProofFileUrl?: ExternalBlob;
+    address: string;
+}> {
+    return {
+        contact: value.contact,
+        dateOfBirth: value.dateOfBirth,
+        yogaCode: value.yogaCode,
+        name: value.name,
+        submittedAt: value.submittedAt,
+        idProof: value.idProof,
+        email: value.email,
+        idProofFileUrl: record_opt_to_undefined(await from_candid_opt_n11(_uploadFile, _downloadFile, value.idProofFileUrl)),
+        address: value.address
+    };
+}
+function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    success: [] | [boolean];
+    topped_up_amount: [] | [bigint];
+}): {
+    success?: boolean;
+    topped_up_amount?: bigint;
+} {
+    return {
+        success: record_opt_to_undefined(from_candid_opt_n6(_uploadFile, _downloadFile, value.success)),
+        topped_up_amount: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.topped_up_amount))
+    };
+}
+async function from_candid_vec_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_AdmissionEntry>): Promise<Array<AdmissionEntry>> {
+    return await Promise.all(value.map(async (x)=>await from_candid_AdmissionEntry_n9(_uploadFile, _downloadFile, x)));
+}
+async function to_candid_ExternalBlob_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
+    return await _uploadFile(value);
+}
+function to_candid__CaffeineStorageRefillInformation_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation): __CaffeineStorageRefillInformation {
+    return to_candid_record_n3(_uploadFile, _downloadFile, value);
+}
+function to_candid_opt_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation | null): [] | [__CaffeineStorageRefillInformation] {
+    return value === null ? candid_none() : candid_some(to_candid__CaffeineStorageRefillInformation_n2(_uploadFile, _downloadFile, value));
+}
+async function to_candid_opt_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob | null): Promise<[] | [_ExternalBlob]> {
+    return value === null ? candid_none() : candid_some(await to_candid_ExternalBlob_n14(_uploadFile, _downloadFile, value));
+}
+function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    proposed_top_up_amount?: bigint;
+}): {
+    proposed_top_up_amount: [] | [bigint];
+} {
+    return {
+        proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
+    };
 }
 export interface CreateActorOptions {
     agent?: Agent;

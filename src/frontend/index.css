@@ -175,6 +175,18 @@
     color: oklch(var(--gold));
   }
 
+  .text-saffron-light {
+    color: oklch(var(--saffron-light));
+  }
+
+  .fill-gold {
+    fill: oklch(var(--gold));
+  }
+
+  .shadow-saffron-lg {
+    box-shadow: 0 8px 40px oklch(var(--saffron) / 0.35);
+  }
+
   .border-saffron {
     border-color: oklch(var(--saffron));
   }
