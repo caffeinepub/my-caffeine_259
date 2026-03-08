@@ -29,12 +29,9 @@ import {
   Eye,
   EyeOff,
   FileText,
-  Loader2,
   Lock,
   LogOut,
-  Menu,
   Printer,
-  RefreshCw,
   Save,
   Shield,
   User,
@@ -42,189 +39,127 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import type {
-  AdmissionEntry,
-  AttendanceRecord,
-  backendInterface,
-} from "../backend.d";
-import { useActor } from "../hooks/useActor";
+import { useCallback, useEffect, useState } from "react";
+import { BottomNav } from "../components/BottomNav";
+import type { LocalAdmissionEntry } from "./AdmissionPage";
 
-function OMSymbol({ className = "" }: { className?: string }) {
-  return (
-    <span
-      className={`inline-block font-display select-none ${className}`}
-      aria-hidden
-    >
-      ॐ
-    </span>
-  );
+// ---- localStorage helpers ----
+function getAdmissions(): LocalAdmissionEntry[] {
+  try {
+    const raw = localStorage.getItem("yoga_admissions");
+    if (!raw) return [];
+    return JSON.parse(raw) as LocalAdmissionEntry[];
+  } catch {
+    return [];
+  }
 }
 
-function AdminNavBar({
-  onLogout,
-  isLoggedIn,
-}: { onLogout: () => void; isLoggedIn: boolean }) {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+// attendance: { "2026-03-08": { "YOGA001": true, "YOGA002": false } }
+type AttendanceData = Record<string, Record<string, boolean>>;
 
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", handler, { passive: true });
-    return () => window.removeEventListener("scroll", handler);
-  }, []);
-
-  return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-cream/95 backdrop-blur-md shadow-[0_2px_20px_oklch(var(--saffron)/0.15)] border-b border-saffron/20"
-          : "bg-foreground/90 backdrop-blur-sm"
-      }`}
-    >
-      <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-        <Link
-          to="/"
-          data-ocid="nav.link"
-          className="flex items-center gap-2 group"
-          aria-label="मुख्य पृष्ठ"
-        >
-          <OMSymbol className="text-saffron text-2xl group-hover:scale-110 transition-transform" />
-          <span className="font-hindi font-bold text-sm sm:text-base text-foreground leading-tight">
-            <span
-              className={`block ${scrolled ? "text-saffron-deep" : "text-white"} transition-colors`}
-            >
-              निःशुल्क योग
-            </span>
-            <span
-              className={`block text-xs ${scrolled ? "text-forest" : "text-white/80"} transition-colors`}
-            >
-              हनुमानगढ़
-            </span>
-          </span>
-        </Link>
-
-        <div className="hidden md:flex items-center gap-3">
-          <Link
-            to="/"
-            data-ocid="nav.link"
-            className={`px-3 py-2 text-sm font-hindi font-medium transition-colors rounded-md hover:bg-saffron/10 ${
-              scrolled
-                ? "text-foreground hover:text-saffron-deep"
-                : "text-white/90 hover:text-white"
-            }`}
-          >
-            मुख्य पृष्ठ
-          </Link>
-          {isLoggedIn && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onLogout}
-              data-ocid="admin.logout_button"
-              className="font-hindi text-sm text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <LogOut className="w-4 h-4 mr-1.5" />
-              लॉगआउट
-            </Button>
-          )}
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button
-          type="button"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          data-ocid="nav.toggle"
-          className={`md:hidden p-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron ${
-            scrolled
-              ? "text-foreground hover:bg-saffron/10"
-              : "text-white hover:bg-white/10"
-          }`}
-          aria-label={mobileOpen ? "मेनू बंद करें" : "मेनू खोलें"}
-          aria-expanded={mobileOpen}
-        >
-          {mobileOpen ? (
-            <X className="w-5 h-5" />
-          ) : (
-            <Menu className="w-5 h-5" />
-          )}
-        </button>
-      </nav>
-
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25 }}
-            className="md:hidden bg-cream/98 backdrop-blur-md border-t border-saffron/20"
-          >
-            <ul className="flex flex-col px-4 py-3 gap-1">
-              <li>
-                <Link
-                  to="/"
-                  data-ocid="nav.link"
-                  onClick={() => setMobileOpen(false)}
-                  className="block px-4 py-3 font-hindi text-base text-foreground hover:text-saffron-deep hover:bg-saffron/10 rounded-lg transition-colors"
-                >
-                  मुख्य पृष्ठ
-                </Link>
-              </li>
-              {isLoggedIn && (
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onLogout();
-                      setMobileOpen(false);
-                    }}
-                    data-ocid="admin.logout_button"
-                    className="w-full text-left px-4 py-3 font-hindi text-base text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                  >
-                    <LogOut className="w-4 h-4 inline mr-2" />
-                    लॉगआउट
-                  </button>
-                </li>
-              )}
-            </ul>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
-  );
+function getAttendance(): AttendanceData {
+  try {
+    const raw = localStorage.getItem("yoga_attendance");
+    if (!raw) return {};
+    return JSON.parse(raw) as AttendanceData;
+  } catch {
+    return {};
+  }
 }
 
+function saveAttendance(data: AttendanceData): void {
+  localStorage.setItem("yoga_attendance", JSON.stringify(data));
+}
+
+// ---- Admin credentials ----
+const ADMIN_USERNAME = "Tushar 5522";
+const ADMIN_PASSWORD = "Yoga@32752";
+
+// ---- Utility ----
+function getTodayDate(): string {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function formatDisplayDate(dateStr: string): string {
+  try {
+    const date = new Date(`${dateStr}T00:00:00`);
+    return date.toLocaleDateString("hi-IN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+function formatSubmissionTime(isoStr: string): string {
+  try {
+    const date = new Date(isoStr);
+    return date.toLocaleDateString("hi-IN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "—";
+  }
+}
+
+const MONTH_NAMES = [
+  "जनवरी",
+  "फरवरी",
+  "मार्च",
+  "अप्रैल",
+  "मई",
+  "जून",
+  "जुलाई",
+  "अगस्त",
+  "सितंबर",
+  "अक्टूबर",
+  "नवंबर",
+  "दिसंबर",
+];
+
+// ---- Login Form ----
 function LoginForm({
   onLogin,
+  loginError,
 }: {
   onLogin: (username: string, password: string) => void;
-  isLoading: boolean;
+  loginError: boolean;
 }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [localError, setLocalError] = useState("");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setLocalError("");
     if (!username.trim() || !password.trim()) {
-      setError("Username और Password दोनों आवश्यक हैं");
+      setLocalError("Username और Password दोनों आवश्यक हैं");
       return;
     }
     onLogin(username, password);
   }
 
+  const errorMsg =
+    localError ||
+    (loginError ? "गलत username या password। कृपया दोबारा प्रयास करें।" : "");
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 pt-20">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 pt-8 pb-28">
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="w-full max-w-md"
       >
-        {/* Lock icon */}
         <div className="text-center mb-8">
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-saffron-light/40 to-saffron/10 border border-saffron/30 flex items-center justify-center mx-auto mb-5">
             <Shield className="w-10 h-10 text-saffron-deep" />
@@ -240,7 +175,6 @@ function LoginForm({
         <Card className="border-saffron/20 shadow-saffron-lg">
           <CardContent className="p-6 sm:p-8">
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-              {/* Username */}
               <div className="space-y-2">
                 <Label
                   htmlFor="admin-username"
@@ -264,7 +198,6 @@ function LoginForm({
                 </div>
               </div>
 
-              {/* Password */}
               <div className="space-y-2">
                 <Label
                   htmlFor="admin-password"
@@ -302,9 +235,8 @@ function LoginForm({
                 </div>
               </div>
 
-              {/* Error */}
               <AnimatePresence>
-                {error && (
+                {errorMsg && (
                   <motion.div
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -314,7 +246,7 @@ function LoginForm({
                   >
                     <X className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
                     <p className="font-hindi text-sm text-destructive">
-                      {error}
+                      {errorMsg}
                     </p>
                   </motion.div>
                 )}
@@ -331,164 +263,67 @@ function LoginForm({
             </form>
           </CardContent>
         </Card>
+
+        <div className="mt-4 text-center">
+          <Link
+            to="/"
+            className="font-hindi text-sm text-saffron-deep hover:text-saffron transition-colors"
+          >
+            ← मुख्य पृष्ठ पर जाएं
+          </Link>
+        </div>
       </motion.div>
     </div>
   );
 }
 
-function formatDate(submittedAt: bigint): string {
-  try {
-    // submittedAt is in nanoseconds from IC
-    const ms = Number(submittedAt) / 1_000_000;
-    const date = new Date(ms);
-    if (Number.isNaN(date.getTime()) || date.getFullYear() < 2000) {
-      return "—";
-    }
-    return date.toLocaleDateString("hi-IN", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return "—";
-  }
-}
-
-function getTodayDate(): string {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
-  const dd = String(today.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-function formatDisplayDate(dateStr: string): string {
-  try {
-    const date = new Date(`${dateStr}T00:00:00`);
-    return date.toLocaleDateString("hi-IN", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  } catch {
-    return dateStr;
-  }
-}
-
-// ---- Attendance Sheet Component ----
+// ---- Attendance Sheet ----
 function AttendanceSheet({
   admissions,
-  credentials,
-  actor,
-}: {
-  admissions: AdmissionEntry[];
-  credentials: { username: string; password: string };
-  actor: backendInterface | null;
-}) {
+}: { admissions: LocalAdmissionEntry[] }) {
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDate());
   const [attendanceMap, setAttendanceMap] = useState<Record<string, boolean>>(
     {},
   );
-  const [attendanceDates, setAttendanceDates] = useState<string[]>([]);
-  const [isLoadingAttendance, setIsLoadingAttendance] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveError, setSaveError] = useState(false);
 
-  // Load past attendance dates on mount
-  useEffect(() => {
-    if (!actor || !credentials.username) return;
-    actor
-      .getAttendanceDates(credentials.username, credentials.password)
-      .then((dates) => {
-        setAttendanceDates([...dates].sort((a, b) => b.localeCompare(a)));
-      })
-      .catch(() => {
-        // silently ignore
-      });
-  }, [actor, credentials]);
-
-  // Load attendance for selected date
   const loadAttendance = useCallback(
-    async (date: string) => {
-      if (!actor || !credentials.username) return;
-      setIsLoadingAttendance(true);
-      setSaveSuccess(false);
-      setSaveError(false);
-      try {
-        const records: AttendanceRecord[] = await actor.getAttendance(
-          date,
-          credentials.username,
-          credentials.password,
-        );
-        const map: Record<string, boolean> = {};
-        // Initialize all members as absent
-        for (const admission of admissions) {
-          map[admission.yogaCode] = false;
-        }
-        // Fill saved records
-        for (const record of records) {
-          map[record.yogaCode] = record.present;
-        }
-        setAttendanceMap(map);
-      } catch {
-        // If no attendance exists for this date, default all to absent
-        const map: Record<string, boolean> = {};
-        for (const admission of admissions) {
-          map[admission.yogaCode] = false;
-        }
-        setAttendanceMap(map);
-      } finally {
-        setIsLoadingAttendance(false);
+    (date: string) => {
+      const allAttendance = getAttendance();
+      const dayData = allAttendance[date] ?? {};
+      const map: Record<string, boolean> = {};
+      for (const entry of admissions) {
+        map[entry.confirmationCode] = dayData[entry.confirmationCode] ?? false;
       }
+      setAttendanceMap(map);
     },
-    [actor, credentials, admissions],
+    [admissions],
   );
 
-  // Load attendance whenever date changes
   useEffect(() => {
     loadAttendance(selectedDate);
   }, [selectedDate, loadAttendance]);
 
-  function handleToggle(yogaCode: string) {
-    setAttendanceMap((prev) => ({
-      ...prev,
-      [yogaCode]: !prev[yogaCode],
-    }));
+  function handleToggle(code: string) {
+    setAttendanceMap((prev) => ({ ...prev, [code]: !prev[code] }));
   }
 
-  async function handleSave() {
-    if (!actor || !credentials.username) return;
-    setIsSaving(true);
-    setSaveSuccess(false);
-    setSaveError(false);
-    try {
-      const records: Array<[string, boolean]> = Object.entries(attendanceMap);
-      await actor.saveAttendance(
-        selectedDate,
-        records,
-        credentials.username,
-        credentials.password,
-      );
-      setSaveSuccess(true);
-      // Refresh attendance dates list
-      const dates = await actor.getAttendanceDates(
-        credentials.username,
-        credentials.password,
-      );
-      setAttendanceDates([...dates].sort((a, b) => b.localeCompare(a)));
-      // Auto-hide success message after 3s
-      setTimeout(() => setSaveSuccess(false), 3000);
-    } catch {
-      setSaveError(true);
-      setTimeout(() => setSaveError(false), 4000);
-    } finally {
-      setIsSaving(false);
-    }
+  function handleSave() {
+    const allAttendance = getAttendance();
+    allAttendance[selectedDate] = { ...attendanceMap };
+    saveAttendance(allAttendance);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
   }
 
   const presentCount = Object.values(attendanceMap).filter(Boolean).length;
   const totalCount = admissions.length;
+
+  // Get past dates that have saved attendance
+  const allAttendance = getAttendance();
+  const savedDates = Object.keys(allAttendance).sort((a, b) =>
+    b.localeCompare(a),
+  );
 
   return (
     <div className="space-y-6">
@@ -496,7 +331,6 @@ function AttendanceSheet({
       <Card className="border-saffron/20 shadow-card-warm">
         <CardContent className="p-5">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
-            {/* Date picker */}
             <div className="flex-1 space-y-2">
               <Label
                 htmlFor="attendance-date"
@@ -508,15 +342,14 @@ function AttendanceSheet({
               <Input
                 id="attendance-date"
                 type="date"
-                data-ocid="admin.attendance.date_input"
+                data-ocid="attendance.date_input"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="font-body border-saffron/30 focus:border-saffron focus-visible:ring-saffron/30 h-11 max-w-xs"
               />
             </div>
 
-            {/* Past dates dropdown */}
-            {attendanceDates.length > 0 && (
+            {savedDates.length > 0 && (
               <div className="flex-1 space-y-2">
                 <Label className="font-hindi text-sm font-semibold text-foreground">
                   पिछली तारीखें
@@ -526,13 +359,13 @@ function AttendanceSheet({
                   onValueChange={(val) => setSelectedDate(val)}
                 >
                   <SelectTrigger
-                    data-ocid="admin.attendance.dates_select"
+                    data-ocid="attendance.dates_select"
                     className="font-hindi border-saffron/30 focus:ring-saffron/30 h-11 max-w-xs"
                   >
                     <SelectValue placeholder="तारीख चुनें" />
                   </SelectTrigger>
                   <SelectContent>
-                    {attendanceDates.map((date) => (
+                    {savedDates.map((date) => (
                       <SelectItem
                         key={date}
                         value={date}
@@ -549,14 +382,14 @@ function AttendanceSheet({
         </CardContent>
       </Card>
 
-      {/* Status messages */}
+      {/* Success message */}
       <AnimatePresence>
         {saveSuccess && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            data-ocid="admin.attendance.success_state"
+            data-ocid="attendance.success_state"
             className="bg-green-50 border border-green-200 rounded-xl px-5 py-4 flex items-center gap-3"
           >
             <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
@@ -565,36 +398,14 @@ function AttendanceSheet({
             </p>
           </motion.div>
         )}
-        {saveError && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            data-ocid="admin.attendance.error_state"
-            className="bg-destructive/10 border border-destructive/30 rounded-xl px-5 py-4 flex items-center gap-3"
-          >
-            <X className="w-5 h-5 text-destructive flex-shrink-0" />
-            <p className="font-hindi font-semibold text-destructive text-sm">
-              सहेजने में त्रुटि हुई। कृपया दोबारा प्रयास करें।
-            </p>
-          </motion.div>
-        )}
       </AnimatePresence>
 
-      {/* Attendance list */}
-      {isLoadingAttendance ? (
-        <div
-          data-ocid="admin.attendance.loading_state"
-          className="flex flex-col items-center justify-center py-16 gap-4"
-        >
-          <Loader2 className="w-10 h-10 text-saffron animate-spin" />
-          <p className="font-hindi text-muted-foreground">लोड हो रहा है...</p>
-        </div>
-      ) : admissions.length === 0 ? (
+      {/* Member list */}
+      {admissions.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          data-ocid="admin.attendance.empty_state"
+          data-ocid="attendance.empty_state"
           className="text-center py-16"
         >
           <div className="w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-5">
@@ -614,7 +425,6 @@ function AttendanceSheet({
           transition={{ duration: 0.4 }}
         >
           <Card className="border-saffron/20 shadow-card-warm overflow-hidden">
-            {/* Header bar */}
             <div className="bg-saffron-light/30 border-b border-saffron/20 px-5 py-3 flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <CalendarDays className="w-4 h-4 text-saffron-deep" />
@@ -635,13 +445,13 @@ function AttendanceSheet({
               </div>
             </div>
 
-            {/* Member list */}
             <div className="divide-y divide-border/50">
               {admissions.map((entry, i) => {
-                const isPresent = attendanceMap[entry.yogaCode] ?? false;
+                const isPresent =
+                  attendanceMap[entry.confirmationCode] ?? false;
                 return (
                   <motion.div
-                    key={entry.yogaCode}
+                    key={entry.confirmationCode}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.04, duration: 0.3 }}
@@ -651,34 +461,31 @@ function AttendanceSheet({
                         : "bg-white hover:bg-saffron/5"
                     }`}
                   >
-                    {/* Index */}
                     <span className="text-xs font-body text-muted-foreground w-6 text-right flex-shrink-0">
                       {i + 1}.
                     </span>
 
-                    {/* Checkbox */}
                     <Checkbox
-                      id={`attendance-${entry.yogaCode}`}
-                      data-ocid={`admin.attendance.checkbox.${i + 1}`}
+                      id={`attendance-${entry.confirmationCode}`}
+                      data-ocid={`attendance.member.checkbox.${i + 1}`}
                       checked={isPresent}
-                      onCheckedChange={() => handleToggle(entry.yogaCode)}
+                      onCheckedChange={() =>
+                        handleToggle(entry.confirmationCode)
+                      }
                       className="border-saffron/40 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600 flex-shrink-0 w-5 h-5"
                     />
 
-                    {/* YOGA code badge */}
                     <Badge className="bg-saffron/15 text-saffron-deep border-saffron/25 font-body font-bold text-xs tracking-wide whitespace-nowrap flex-shrink-0">
-                      {entry.yogaCode}
+                      {entry.confirmationCode}
                     </Badge>
 
-                    {/* Name */}
                     <label
-                      htmlFor={`attendance-${entry.yogaCode}`}
+                      htmlFor={`attendance-${entry.confirmationCode}`}
                       className="font-hindi text-sm font-semibold text-foreground cursor-pointer flex-1 truncate"
                     >
                       {entry.name}
                     </label>
 
-                    {/* Status badge */}
                     <span
                       className={`text-xs font-hindi font-semibold whitespace-nowrap flex-shrink-0 ${
                         isPresent ? "text-green-600" : "text-red-500"
@@ -691,28 +498,17 @@ function AttendanceSheet({
               })}
             </div>
 
-            {/* Save button footer */}
             <div className="border-t border-saffron/20 bg-muted/20 px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
               <p className="font-hindi text-sm text-muted-foreground">
                 {presentCount} / {totalCount} सदस्य उपस्थित
               </p>
               <Button
                 onClick={handleSave}
-                disabled={isSaving}
-                data-ocid="admin.attendance.save_button"
+                data-ocid="attendance.save_button"
                 className="bg-saffron hover:bg-saffron-deep text-white font-hindi font-bold shadow-saffron transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    सहेजा जा रहा है...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    सहेजें
-                  </>
-                )}
+                <Save className="w-4 h-4 mr-2" />
+                सहेजें
               </Button>
             </div>
           </Card>
@@ -722,9 +518,9 @@ function AttendanceSheet({
   );
 }
 
-// ---- Monthly Summary Component ----
+// ---- Monthly Summary ----
 interface MemberSummary {
-  yogaCode: string;
+  confirmationCode: string;
   name: string;
   presentDays: number;
   absentDays: number;
@@ -732,122 +528,54 @@ interface MemberSummary {
   attendancePct: number;
 }
 
-const MONTH_NAMES = [
-  "जनवरी",
-  "फरवरी",
-  "मार्च",
-  "अप्रैल",
-  "मई",
-  "जून",
-  "जुलाई",
-  "अगस्त",
-  "सितंबर",
-  "अक्टूबर",
-  "नवंबर",
-  "दिसंबर",
-];
-
-function MonthlySummary({
-  admissions,
-  credentials,
-  actor,
-}: {
-  admissions: AdmissionEntry[];
-  credentials: { username: string; password: string };
-  actor: backendInterface | null;
-}) {
+function MonthlySummary({ admissions }: { admissions: LocalAdmissionEntry[] }) {
   const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1); // 1–12
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [summaryData, setSummaryData] = useState<MemberSummary[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(false);
 
   const currentYear = now.getFullYear();
-  const yearOptions = Array.from(
-    { length: currentYear - 2024 },
-    (_, i) => 2025 + i,
-  );
-  // Ensure currentYear is always included
-  if (!yearOptions.includes(currentYear)) yearOptions.push(currentYear);
+  const yearOptions: number[] = [];
+  for (let y = 2025; y <= currentYear; y++) {
+    yearOptions.push(y);
+  }
 
-  const fetchSummary = useCallback(async () => {
-    if (!actor || !credentials.username) return;
-    setIsLoading(true);
-    setError(false);
-    try {
-      // Fetch all dates and admissions in parallel
-      const [allDates, allAdmissions] = await Promise.all([
-        actor.getAttendanceDates(credentials.username, credentials.password),
-        actor.getAllAdmissions(credentials.username, credentials.password),
-      ]);
+  const computeSummary = useCallback(() => {
+    const allAttendance = getAttendance();
+    const prefix = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`;
+    const matchingDates = Object.keys(allAttendance).filter((d) =>
+      d.startsWith(prefix),
+    );
 
-      // Filter dates matching selected month/year (YYYY-MM format prefix)
-      const prefix = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`;
-      const matchingDates = allDates.filter((d) => d.startsWith(prefix));
+    const totalDays = matchingDates.length;
 
-      // Fetch attendance for all matching dates in parallel
-      const attendanceResults = await Promise.all(
-        matchingDates.map((date) =>
-          actor.getAttendance(date, credentials.username, credentials.password),
-        ),
-      );
-
-      // Build a map: yogaCode → { present: number, absent: number }
-      const statsMap: Record<string, { present: number; absent: number }> = {};
-      for (const admission of allAdmissions.length > 0
-        ? allAdmissions
-        : admissions) {
-        statsMap[admission.yogaCode] = { present: 0, absent: 0 };
-      }
-
-      for (const dayRecords of attendanceResults) {
-        for (const record of dayRecords) {
-          if (!statsMap[record.yogaCode]) {
-            statsMap[record.yogaCode] = { present: 0, absent: 0 };
-          }
-          if (record.present) {
-            statsMap[record.yogaCode].present += 1;
-          } else {
-            statsMap[record.yogaCode].absent += 1;
-          }
+    const summary: MemberSummary[] = admissions.map((entry) => {
+      let presentDays = 0;
+      for (const date of matchingDates) {
+        const dayData = allAttendance[date] ?? {};
+        if (dayData[entry.confirmationCode]) {
+          presentDays++;
         }
       }
+      const absentDays = totalDays - presentDays;
+      const pct =
+        totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
+      return {
+        confirmationCode: entry.confirmationCode,
+        name: entry.name,
+        presentDays,
+        absentDays,
+        totalDays,
+        attendancePct: pct,
+      };
+    });
 
-      const totalDays = matchingDates.length;
-
-      // Build summary using current admissions list for names
-      const memberList = allAdmissions.length > 0 ? allAdmissions : admissions;
-      const summary: MemberSummary[] = memberList.map((entry) => {
-        const stats = statsMap[entry.yogaCode] ?? { present: 0, absent: 0 };
-        const memberTotalDays = stats.present + stats.absent;
-        const effectiveTotalDays =
-          memberTotalDays > 0 ? memberTotalDays : totalDays;
-        const pct =
-          effectiveTotalDays > 0
-            ? Math.round((stats.present / effectiveTotalDays) * 100)
-            : 0;
-        return {
-          yogaCode: entry.yogaCode,
-          name: entry.name,
-          presentDays: stats.present,
-          absentDays: totalDays > 0 ? totalDays - stats.present : stats.absent,
-          totalDays,
-          attendancePct: pct,
-        };
-      });
-
-      setSummaryData(summary);
-    } catch {
-      setError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [actor, credentials, selectedMonth, selectedYear, admissions]);
+    setSummaryData(summary);
+  }, [admissions, selectedMonth, selectedYear]);
 
   useEffect(() => {
-    fetchSummary();
-  }, [fetchSummary]);
+    computeSummary();
+  }, [computeSummary]);
 
   function handleDownloadCSV() {
     const headers = [
@@ -861,7 +589,7 @@ function MonthlySummary({
     ];
     const rows = summaryData.map((m, i) => [
       String(i + 1),
-      m.yogaCode,
+      m.confirmationCode,
       m.name,
       String(m.presentDays),
       String(m.absentDays),
@@ -919,16 +647,12 @@ function MonthlySummary({
 
   return (
     <div className="space-y-6">
-      {/* Controls Card */}
+      {/* Controls */}
       <Card className="border-saffron/20 shadow-card-warm print:hidden">
         <CardContent className="p-5">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end flex-wrap">
-            {/* Month selector */}
             <div className="flex-1 min-w-[160px] space-y-2">
-              <Label
-                htmlFor="summary-month-select"
-                className="font-hindi text-sm font-semibold text-foreground"
-              >
+              <Label className="font-hindi text-sm font-semibold text-foreground">
                 महीना चुनें
               </Label>
               <Select
@@ -936,17 +660,16 @@ function MonthlySummary({
                 onValueChange={(val) => setSelectedMonth(Number(val))}
               >
                 <SelectTrigger
-                  id="summary-month-select"
-                  data-ocid="admin.summary.month_select"
+                  data-ocid="summary.month_select"
                   className="font-hindi border-saffron/30 focus:ring-saffron/30 h-11"
                 >
                   <SelectValue placeholder="महीना" />
                 </SelectTrigger>
                 <SelectContent>
-                  {MONTH_NAMES.map((name) => (
+                  {MONTH_NAMES.map((name, idx) => (
                     <SelectItem
                       key={name}
-                      value={String(MONTH_NAMES.indexOf(name) + 1)}
+                      value={String(idx + 1)}
                       className="font-hindi"
                     >
                       {name}
@@ -956,12 +679,8 @@ function MonthlySummary({
               </Select>
             </div>
 
-            {/* Year selector */}
             <div className="flex-1 min-w-[120px] space-y-2">
-              <Label
-                htmlFor="summary-year-select"
-                className="font-hindi text-sm font-semibold text-foreground"
-              >
+              <Label className="font-hindi text-sm font-semibold text-foreground">
                 वर्ष चुनें
               </Label>
               <Select
@@ -969,8 +688,7 @@ function MonthlySummary({
                 onValueChange={(val) => setSelectedYear(Number(val))}
               >
                 <SelectTrigger
-                  id="summary-year-select"
-                  data-ocid="admin.summary.year_select"
+                  data-ocid="summary.year_select"
                   className="font-hindi border-saffron/30 focus:ring-saffron/30 h-11"
                 >
                   <SelectValue placeholder="वर्ष" />
@@ -985,13 +703,12 @@ function MonthlySummary({
               </Select>
             </div>
 
-            {/* Action buttons */}
             <div className="flex gap-2 pt-6 sm:pt-0">
               <Button
                 variant="outline"
                 onClick={handleDownloadCSV}
-                disabled={isLoading || summaryData.length === 0}
-                data-ocid="admin.summary.download_button"
+                disabled={summaryData.length === 0}
+                data-ocid="summary.csv_button"
                 className="font-hindi border-saffron/30 text-saffron-deep hover:bg-saffron/10 hover:border-saffron/50 gap-1.5 h-11"
               >
                 <Download className="w-4 h-4" />
@@ -1000,8 +717,8 @@ function MonthlySummary({
               <Button
                 variant="outline"
                 onClick={handlePrint}
-                disabled={isLoading || summaryData.length === 0}
-                data-ocid="admin.summary.print_button"
+                disabled={summaryData.length === 0}
+                data-ocid="summary.pdf_button"
                 className="font-hindi border-saffron/30 text-saffron-deep hover:bg-saffron/10 hover:border-saffron/50 gap-1.5 h-11"
               >
                 <Printer className="w-4 h-4" />
@@ -1012,7 +729,7 @@ function MonthlySummary({
         </CardContent>
       </Card>
 
-      {/* Print header — only shows when printing */}
+      {/* Print header */}
       <div className="hidden print:block mb-6 text-center">
         <h2 className="font-hindi font-bold text-xl text-foreground">
           निःशुल्क योग कक्षा — मासिक अटेंडेंस सारांश
@@ -1022,41 +739,11 @@ function MonthlySummary({
         </p>
       </div>
 
-      {/* Error state */}
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            data-ocid="admin.summary.error_state"
-            className="bg-destructive/10 border border-destructive/30 rounded-xl px-5 py-4 flex items-center gap-3"
-          >
-            <X className="w-5 h-5 text-destructive flex-shrink-0" />
-            <p className="font-hindi font-semibold text-destructive text-sm">
-              डेटा लोड करने में समस्या हुई। कृपया दोबारा प्रयास करें।
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Loading state */}
-      {isLoading ? (
-        <div
-          data-ocid="admin.summary.loading_state"
-          className="flex flex-col items-center justify-center py-20 gap-4"
-        >
-          <Loader2 className="w-10 h-10 text-saffron animate-spin" />
-          <p className="font-hindi text-muted-foreground">
-            सारांश तैयार हो रहा है...
-          </p>
-        </div>
-      ) : admissions.length === 0 ? (
-        /* Empty state — no members */
+      {admissions.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          data-ocid="admin.summary.empty_state"
+          data-ocid="summary.empty_state"
           className="text-center py-20"
         >
           <div className="w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-5">
@@ -1070,14 +757,12 @@ function MonthlySummary({
           </p>
         </motion.div>
       ) : (
-        /* Summary table */
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
           <Card className="border-saffron/20 shadow-card-warm overflow-hidden">
-            {/* Header bar */}
             <div className="bg-saffron-light/30 border-b border-saffron/20 px-5 py-3 flex items-center justify-between flex-wrap gap-2 print:bg-gray-100">
               <div className="flex items-center gap-2">
                 <BarChart2 className="w-4 h-4 text-saffron-deep" />
@@ -1095,9 +780,8 @@ function MonthlySummary({
               </div>
             </div>
 
-            {/* Table */}
             <div className="overflow-x-auto">
-              <Table data-ocid="admin.summary.table">
+              <Table data-ocid="summary.table">
                 <TableHeader>
                   <TableRow className="bg-muted/30 hover:bg-muted/30">
                     <TableHead className="font-hindi font-bold text-foreground text-xs whitespace-nowrap px-4 py-3 w-12">
@@ -1126,8 +810,8 @@ function MonthlySummary({
                 <TableBody>
                   {summaryData.map((member, i) => (
                     <TableRow
-                      key={member.yogaCode}
-                      data-ocid={`admin.summary.row.${i + 1}`}
+                      key={member.confirmationCode}
+                      data-ocid={`summary.row.${i + 1}`}
                       className="hover:bg-saffron/5 border-b border-border/50"
                     >
                       <TableCell className="font-body text-xs text-muted-foreground px-4 py-3 text-right">
@@ -1135,7 +819,7 @@ function MonthlySummary({
                       </TableCell>
                       <TableCell className="px-4 py-3 whitespace-nowrap">
                         <Badge className="bg-saffron/15 text-saffron-deep border-saffron/25 font-body font-bold text-xs tracking-wide">
-                          {member.yogaCode}
+                          {member.confirmationCode}
                         </Badge>
                       </TableCell>
                       <TableCell className="font-hindi text-sm font-semibold text-foreground px-4 py-3 whitespace-nowrap">
@@ -1168,7 +852,6 @@ function MonthlySummary({
               </Table>
             </div>
 
-            {/* Legend */}
             <div className="border-t border-saffron/20 bg-muted/10 px-5 py-3 flex items-center gap-4 flex-wrap print:hidden">
               <span className="font-hindi text-xs text-muted-foreground">
                 उपस्थिति %:
@@ -1199,26 +882,36 @@ function MonthlySummary({
   );
 }
 
-// ---- Admin Dashboard with Tabs ----
+// ---- Admin Dashboard ----
 function AdminDashboard({
   admissions,
-  isLoading,
-  onRefresh,
   onLogout,
-  loginError,
-  credentials,
-  actor,
+  onRefresh,
 }: {
-  admissions: AdmissionEntry[];
-  isLoading: boolean;
-  onRefresh: () => void;
+  admissions: LocalAdmissionEntry[];
   onLogout: () => void;
-  loginError: boolean;
-  credentials: { username: string; password: string };
-  actor: backendInterface | null;
+  onRefresh: () => void;
 }) {
+  function openIdProof(entry: LocalAdmissionEntry) {
+    if (!entry.idProofFileData) return;
+    // Determine MIME type from base64 header
+    const mimeMatch = entry.idProofFileData.match(/^data:([^;]+);base64,/);
+    const mime = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+    const base64 = entry.idProofFileData.replace(/^data:[^;]+;base64,/, "");
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: mime });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+    // Revoke after a delay to allow the tab to open
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
   return (
-    <div className="min-h-screen bg-background pt-20 pb-16">
+    <div className="min-h-screen bg-background pt-4 pb-36 md:pb-16">
       {/* Stats header */}
       <div className="bg-gradient-to-br from-saffron-deep to-[oklch(0.45_0.15_45)] py-10 px-4 sm:px-6 relative overflow-hidden">
         <div
@@ -1244,7 +937,7 @@ function AdminDashboard({
                   <Users className="w-5 h-5 text-gold" />
                   <div>
                     <p className="font-display font-bold text-2xl text-white leading-none">
-                      {isLoading ? "—" : admissions.length}
+                      {admissions.length}
                     </p>
                     <p className="font-hindi text-white/60 text-xs">कुल प्रवेश</p>
                   </div>
@@ -1253,13 +946,18 @@ function AdminDashboard({
               <Button
                 variant="ghost"
                 onClick={onRefresh}
-                disabled={isLoading}
                 className="bg-white/15 hover:bg-white/25 text-white border border-white/20 font-hindi"
               >
-                <RefreshCw
-                  className={`w-4 h-4 mr-1.5 ${isLoading ? "animate-spin" : ""}`}
-                />
                 रिफ्रेश
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={onLogout}
+                data-ocid="admin.logout_button"
+                className="bg-white/15 hover:bg-white/25 text-white border border-white/20 font-hindi"
+              >
+                <LogOut className="w-4 h-4 mr-1.5" />
+                लॉगआउट
               </Button>
             </div>
           </div>
@@ -1268,30 +966,6 @@ function AdminDashboard({
 
       {/* Main content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 mt-8">
-        {/* Login error */}
-        <AnimatePresence>
-          {loginError && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              data-ocid="admin.error_state"
-              className="mb-6 bg-destructive/10 border border-destructive/30 rounded-xl px-5 py-4 flex items-start gap-3"
-            >
-              <X className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-hindi font-semibold text-destructive text-sm">
-                  गलत username या password
-                </p>
-                <p className="font-hindi text-destructive/70 text-xs mt-0.5">
-                  कृपया सही credentials के साथ दोबारा प्रयास करें।
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Tabs */}
         <Tabs defaultValue="admissions">
           <TabsList className="mb-6 bg-saffron-light/30 border border-saffron/20 p-1 rounded-xl h-auto flex flex-wrap gap-1">
             <TabsTrigger
@@ -1304,7 +978,7 @@ function AdminDashboard({
             </TabsTrigger>
             <TabsTrigger
               value="attendance"
-              data-ocid="admin.attendance_tab"
+              data-ocid="attendance.tab"
               className="font-hindi font-semibold text-sm data-[state=active]:bg-saffron data-[state=active]:text-white data-[state=active]:shadow-saffron rounded-lg h-10 px-4 sm:px-6 transition-all"
             >
               <CalendarDays className="w-4 h-4 mr-1.5 sm:mr-2" />
@@ -1312,7 +986,7 @@ function AdminDashboard({
             </TabsTrigger>
             <TabsTrigger
               value="summary"
-              data-ocid="admin.summary_tab"
+              data-ocid="summary.tab"
               className="font-hindi font-semibold text-sm data-[state=active]:bg-saffron data-[state=active]:text-white data-[state=active]:shadow-saffron rounded-lg h-10 px-4 sm:px-6 transition-all"
             >
               <BarChart2 className="w-4 h-4 mr-1.5 sm:mr-2" />
@@ -1322,25 +996,11 @@ function AdminDashboard({
 
           {/* Admissions Tab */}
           <TabsContent value="admissions">
-            {/* Loading state */}
-            {isLoading && (
-              <div
-                data-ocid="admin.loading_state"
-                className="flex flex-col items-center justify-center py-20 gap-4"
-              >
-                <Loader2 className="w-10 h-10 text-saffron animate-spin" />
-                <p className="font-hindi text-muted-foreground">
-                  डेटा लोड हो रहा है...
-                </p>
-              </div>
-            )}
-
-            {/* No data state */}
-            {!isLoading && !loginError && admissions.length === 0 && (
+            {admissions.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                data-ocid="admin.empty_state"
+                data-ocid="admin.admissions_empty_state"
                 className="text-center py-20"
               >
                 <div className="w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-5">
@@ -1353,17 +1013,13 @@ function AdminDashboard({
                   जब कोई फॉर्म जमा करेगा, यहाँ दिखेगा
                 </p>
               </motion.div>
-            )}
-
-            {/* Table */}
-            {!isLoading && admissions.length > 0 && (
+            ) : (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
                 <Card className="border-saffron/20 shadow-card-warm overflow-hidden">
-                  {/* Table header bar */}
                   <div className="bg-saffron-light/30 border-b border-saffron/20 px-5 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Shield className="w-4 h-4 text-saffron-deep" />
@@ -1376,9 +1032,8 @@ function AdminDashboard({
                     </Badge>
                   </div>
 
-                  {/* Scrollable table */}
                   <div className="overflow-x-auto">
-                    <Table data-ocid="admin.table">
+                    <Table data-ocid="admin.admissions_table">
                       <TableHeader>
                         <TableRow className="bg-muted/30 hover:bg-muted/30">
                           <TableHead className="font-hindi font-bold text-foreground text-xs whitespace-nowrap px-4 py-3">
@@ -1413,13 +1068,13 @@ function AdminDashboard({
                       <TableBody>
                         {admissions.map((entry, i) => (
                           <TableRow
-                            key={entry.yogaCode}
-                            data-ocid={`admin.row.${i + 1}`}
+                            key={entry.confirmationCode}
+                            data-ocid={`admin.admissions.row.${i + 1}`}
                             className="hover:bg-saffron/5 border-b border-border/50"
                           >
                             <TableCell className="px-4 py-3">
                               <Badge className="bg-saffron/15 text-saffron-deep border-saffron/25 font-body font-bold text-xs tracking-wide whitespace-nowrap">
-                                {entry.yogaCode}
+                                {entry.confirmationCode}
                               </Badge>
                             </TableCell>
                             <TableCell className="font-hindi text-sm font-semibold text-foreground px-4 py-3 whitespace-nowrap">
@@ -1440,19 +1095,19 @@ function AdminDashboard({
                               </span>
                             </TableCell>
                             <TableCell className="font-body text-sm text-muted-foreground px-4 py-3 whitespace-nowrap">
-                              {entry.idProof}
+                              {entry.idProofNumber}
                             </TableCell>
                             <TableCell className="px-4 py-3 whitespace-nowrap">
-                              {entry.idProofFileUrl ? (
-                                <a
-                                  href={entry.idProofFileUrl.getDirectURL()}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                              {entry.idProofFileData ? (
+                                <button
+                                  type="button"
+                                  onClick={() => openIdProof(entry)}
+                                  data-ocid={`admin.admissions.view_id.${i + 1}`}
                                   className="inline-flex items-center gap-1.5 text-xs font-hindi font-semibold text-saffron-deep hover:text-saffron bg-saffron/10 hover:bg-saffron/20 px-3 py-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
                                   देखें
-                                </a>
+                                </button>
                               ) : (
                                 <span className="text-xs text-muted-foreground/50 font-hindi">
                                   —
@@ -1460,7 +1115,7 @@ function AdminDashboard({
                               )}
                             </TableCell>
                             <TableCell className="font-hindi text-sm text-muted-foreground px-4 py-3 whitespace-nowrap">
-                              {formatDate(entry.submittedAt)}
+                              {formatSubmissionTime(entry.submissionTime)}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1474,138 +1129,54 @@ function AdminDashboard({
 
           {/* Attendance Tab */}
           <TabsContent value="attendance">
-            <AttendanceSheet
-              admissions={admissions}
-              credentials={credentials}
-              actor={actor}
-            />
+            <AttendanceSheet admissions={admissions} />
           </TabsContent>
 
           {/* Monthly Summary Tab */}
           <TabsContent value="summary">
-            <MonthlySummary
-              admissions={admissions}
-              credentials={credentials}
-              actor={actor}
-            />
+            <MonthlySummary admissions={admissions} />
           </TabsContent>
         </Tabs>
-
-        {/* Logout button bottom */}
-        {!isLoading && (
-          <div className="flex justify-center mt-8">
-            <Button
-              variant="outline"
-              onClick={onLogout}
-              data-ocid="admin.logout_button"
-              className="font-hindi border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive/50"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              लॉगआउट करें
-            </Button>
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
+// ---- Main Export ----
 export default function AdminPage() {
   const [loggedIn, setLoggedIn] = useState(false);
-  const [credentials, setCredentials] = useState({
-    username: "",
-    password: "",
-  });
-  const [admissions, setAdmissions] = useState<AdmissionEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState(false);
-  const { actor } = useActor();
-  const fetchedRef = useRef(false);
+  const [admissions, setAdmissions] = useState<LocalAdmissionEntry[]>([]);
 
-  async function handleLogin(username: string, password: string) {
-    setIsLoading(true);
-    setLoginError(false);
-    fetchedRef.current = false;
-    try {
-      if (!actor) {
-        // Store credentials to use once actor is available
-        setCredentials({ username, password });
-        setLoggedIn(true);
-        return;
-      }
-      const data = await actor.getAllAdmissions(username, password);
-      setAdmissions(data);
-      setCredentials({ username, password });
+  function handleLogin(username: string, password: string) {
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       setLoggedIn(true);
-      fetchedRef.current = true;
-    } catch {
+      setLoginError(false);
+      setAdmissions(getAdmissions());
+    } else {
       setLoginError(true);
-    } finally {
-      setIsLoading(false);
     }
-  }
-
-  // Fetch when actor becomes available after login
-  useEffect(() => {
-    if (!loggedIn || !actor || fetchedRef.current || !credentials.username)
-      return;
-    fetchedRef.current = true;
-    setIsLoading(true);
-    actor
-      .getAllAdmissions(credentials.username, credentials.password)
-      .then((data) => {
-        setAdmissions(data);
-        setLoginError(false);
-      })
-      .catch(() => {
-        setLoginError(true);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [actor, loggedIn, credentials]);
-
-  function handleRefresh() {
-    if (!actor || !credentials.username) return;
-    fetchedRef.current = true;
-    setIsLoading(true);
-    actor
-      .getAllAdmissions(credentials.username, credentials.password)
-      .then((data) => {
-        setAdmissions(data);
-        setLoginError(false);
-      })
-      .catch(() => {
-        setLoginError(true);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
   }
 
   function handleLogout() {
     setLoggedIn(false);
-    setCredentials({ username: "", password: "" });
-    setAdmissions([]);
     setLoginError(false);
-    fetchedRef.current = false;
+    setAdmissions([]);
+  }
+
+  function handleRefresh() {
+    setAdmissions(getAdmissions());
   }
 
   return (
     <>
-      <AdminNavBar onLogout={handleLogout} isLoggedIn={loggedIn} />
-
       {!loggedIn ? (
-        <LoginForm onLogin={handleLogin} isLoading={isLoading} />
+        <LoginForm onLogin={handleLogin} loginError={loginError} />
       ) : (
         <AdminDashboard
           admissions={admissions}
-          isLoading={isLoading}
-          onRefresh={handleRefresh}
           onLogout={handleLogout}
-          loginError={loginError}
-          credentials={credentials}
-          actor={actor}
+          onRefresh={handleRefresh}
         />
       )}
 
@@ -1628,6 +1199,8 @@ export default function AdminPage() {
           </p>
         </div>
       </footer>
+
+      <BottomNav />
     </>
   );
 }

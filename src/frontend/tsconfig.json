@@ -27,6 +27,7 @@
     "node_modules",
     "dist",
     "build",
-    "*.config.js"
+    "*.config.js",
+    "src/hooks/useActor.ts"
   ]
 }

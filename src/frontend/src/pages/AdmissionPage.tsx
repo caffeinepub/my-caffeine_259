@@ -9,19 +9,16 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Link } from "@tanstack/react-router";
 import {
   CalendarDays,
   CheckCircle2,
-  ChevronDown,
   Clock,
   FileText,
   Image,
   Loader2,
   MapPin,
-  Menu,
   MessageCircle,
   Phone,
   Star,
@@ -29,137 +26,58 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
-import { useSubmitAdmission } from "../hooks/useQueries";
+import { useRef, useState } from "react";
+import { BottomNav } from "../components/BottomNav";
 
-function OMSymbol({ className = "" }: { className?: string }) {
-  return (
-    <span
-      className={`inline-block font-display select-none ${className}`}
-      aria-hidden
-    >
-      ॐ
-    </span>
-  );
+// ---- localStorage helpers ----
+export interface LocalAdmissionEntry {
+  id: number;
+  confirmationCode: string;
+  name: string;
+  address: string;
+  contact: string;
+  email: string;
+  dateOfBirth: string;
+  idProofNumber: string;
+  idProofFileName: string;
+  idProofFileData: string; // base64
+  submissionTime: string;
 }
 
-function AdmissionNavBar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", handler, { passive: true });
-    return () => window.removeEventListener("scroll", handler);
-  }, []);
-
-  return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-cream/95 backdrop-blur-md shadow-[0_2px_20px_oklch(var(--saffron)/0.15)] border-b border-saffron/20"
-          : "bg-foreground/90 backdrop-blur-sm"
-      }`}
-    >
-      <nav className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-        <Link
-          to="/"
-          data-ocid="nav.link"
-          className="flex items-center gap-2 group"
-          aria-label="मुख्य पृष्ठ"
-        >
-          <OMSymbol className="text-saffron text-2xl group-hover:scale-110 transition-transform" />
-          <span className="font-hindi font-bold text-sm sm:text-base text-foreground leading-tight">
-            <span
-              className={`block ${scrolled ? "text-saffron-deep" : "text-white"} transition-colors`}
-            >
-              निःशुल्क योग
-            </span>
-            <span
-              className={`block text-xs ${scrolled ? "text-forest" : "text-white/80"} transition-colors`}
-            >
-              हनुमानगढ़
-            </span>
-          </span>
-        </Link>
-
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-3">
-          <Link
-            to="/"
-            data-ocid="nav.link"
-            className={`px-3 py-2 text-sm font-hindi font-medium transition-colors rounded-md hover:bg-saffron/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron ${
-              scrolled
-                ? "text-foreground hover:text-saffron-deep"
-                : "text-white/90 hover:text-white"
-            }`}
-          >
-            मुख्य पृष्ठ
-          </Link>
-          <span
-            className={`px-3 py-2 text-sm font-hindi font-semibold rounded-md bg-saffron/20 ${
-              scrolled ? "text-saffron-deep" : "text-gold"
-            }`}
-          >
-            प्रवेश फॉर्म
-          </span>
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button
-          type="button"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          data-ocid="nav.toggle"
-          className={`md:hidden p-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron ${
-            scrolled
-              ? "text-foreground hover:bg-saffron/10"
-              : "text-white hover:bg-white/10"
-          }`}
-          aria-label={mobileOpen ? "मेनू बंद करें" : "मेनू खोलें"}
-          aria-expanded={mobileOpen}
-        >
-          {mobileOpen ? (
-            <X className="w-5 h-5" />
-          ) : (
-            <Menu className="w-5 h-5" />
-          )}
-        </button>
-      </nav>
-
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25 }}
-            className="md:hidden bg-cream/98 backdrop-blur-md border-t border-saffron/20"
-          >
-            <ul className="flex flex-col px-4 py-3 gap-1">
-              <li>
-                <Link
-                  to="/"
-                  data-ocid="nav.link"
-                  onClick={() => setMobileOpen(false)}
-                  className="block px-4 py-3 font-hindi text-base text-foreground hover:text-saffron-deep hover:bg-saffron/10 rounded-lg transition-colors"
-                >
-                  मुख्य पृष्ठ
-                </Link>
-              </li>
-              <li>
-                <span className="block px-4 py-3 font-hindi text-base text-saffron-deep font-semibold bg-saffron/10 rounded-lg">
-                  प्रवेश फॉर्म
-                </span>
-              </li>
-            </ul>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </header>
-  );
+function getAdmissions(): LocalAdmissionEntry[] {
+  try {
+    const raw = localStorage.getItem("yoga_admissions");
+    if (!raw) return [];
+    return JSON.parse(raw) as LocalAdmissionEntry[];
+  } catch {
+    return [];
+  }
 }
 
+function saveAdmissions(entries: LocalAdmissionEntry[]): void {
+  localStorage.setItem("yoga_admissions", JSON.stringify(entries));
+}
+
+function generateYogaCode(index: number): string {
+  return `YOGA${String(index).padStart(3, "0")}`;
+}
+
+function toBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// ---- Success Dialog ----
 function SuccessDialog({
   open,
   yogaCode,
@@ -179,7 +97,6 @@ function SuccessDialog({
           <DialogTitle className="sr-only">पंजीकरण सफल</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center text-center py-6 px-2">
-          {/* Success Icon */}
           <motion.div
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
@@ -207,7 +124,6 @@ function SuccessDialog({
             आपका योग कोड है:
           </motion.p>
 
-          {/* YOGA Code display */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -252,25 +168,23 @@ function SuccessDialog({
   );
 }
 
+// ---- Main Page ----
 export default function AdmissionPage() {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [contact, setContact] = useState("");
   const [email, setEmail] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
-  const [idProof, setIdProof] = useState("");
+  const [idProofNumber, setIdProofNumber] = useState("");
   const [idProofFile, setIdProofFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [successCode, setSuccessCode] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const submitMutation = useSubmitAdmission();
 
   function handleFileSelect(file: File) {
     setIdProofFile(file);
-    setUploadProgress(0);
     setFormError("");
   }
 
@@ -295,17 +209,10 @@ export default function AdmissionPage() {
     setIsDragging(false);
   }
 
-  function formatFileSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFormError("");
 
-    // Basic phone validation
     const phoneClean = contact.replace(/[\s\-()]/g, "");
     if (phoneClean.length < 10) {
       setFormError("कृपया वैध संपर्क नंबर दर्ज करें (कम से कम 10 अंक)");
@@ -317,66 +224,54 @@ export default function AdmissionPage() {
       return;
     }
 
-    // Prepare ExternalBlob from file
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let externalBlob: any = null;
-    try {
-      const arrayBuffer = await idProofFile.arrayBuffer();
-      const fileBytes = new Uint8Array(arrayBuffer);
-      // Import ExternalBlob from backend module
-      const { ExternalBlob: EB } = await import("../backend");
-      externalBlob = EB.fromBytes(fileBytes).withUploadProgress(
-        (pct: number) => {
-          setUploadProgress(pct);
-        },
-      );
-    } catch {
-      setFormError("फ़ाइल प्रोसेस करने में समस्या हुई। कृपया दोबारा प्रयास करें।");
-      return;
-    }
+    setIsSubmitting(true);
 
-    submitMutation.mutate(
-      {
+    try {
+      const base64Data = await toBase64(idProofFile);
+      const existing = getAdmissions();
+      const newId = existing.length + 1;
+      const confirmationCode = generateYogaCode(newId);
+
+      const newEntry: LocalAdmissionEntry = {
+        id: newId,
+        confirmationCode,
         name,
         address,
         contact,
         email,
         dateOfBirth,
-        idProof,
-        idProofFileUrl: externalBlob,
-      },
-      {
-        onSuccess: (code) => {
-          setSuccessCode(code);
-        },
-        onError: () => {
-          setFormError("फॉर्म जमा करने में समस्या हुई। कृपया दोबारा प्रयास करें।");
-        },
-      },
-    );
+        idProofNumber,
+        idProofFileName: idProofFile.name,
+        idProofFileData: base64Data,
+        submissionTime: new Date().toISOString(),
+      };
+
+      saveAdmissions([...existing, newEntry]);
+      setSuccessCode(confirmationCode);
+    } catch {
+      setFormError("फॉर्म जमा करने में समस्या हुई। कृपया दोबारा प्रयास करें।");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleClose() {
     setSuccessCode(null);
-    // Reset form on success
     setName("");
     setAddress("");
     setContact("");
     setEmail("");
     setDateOfBirth("");
-    setIdProof("");
+    setIdProofNumber("");
     setIdProofFile(null);
-    setUploadProgress(0);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   return (
     <>
-      <AdmissionNavBar />
-
-      <main className="min-h-screen bg-background pt-24 pb-16">
+      <main className="min-h-screen bg-background pt-4 pb-36 md:pb-16">
         {/* Hero Strip */}
         <div className="bg-gradient-to-br from-saffron-deep to-[oklch(0.45_0.15_45)] py-14 px-4 sm:px-6 relative overflow-hidden">
-          {/* Grid overlay */}
           <div className="absolute inset-0 opacity-[0.06]" aria-hidden>
             <div
               className="absolute inset-0"
@@ -411,7 +306,6 @@ export default function AdmissionPage() {
               </p>
             </motion.div>
 
-            {/* Info chips */}
             <motion.div
               className="flex flex-wrap gap-3 justify-center mt-6"
               initial={{ opacity: 0, y: 15 }}
@@ -442,7 +336,6 @@ export default function AdmissionPage() {
             transition={{ duration: 0.7, delay: 0.15 }}
           >
             <Card className="border-saffron/20 shadow-saffron-lg overflow-hidden">
-              {/* Card header strip */}
               <div className="bg-saffron-light/30 border-b border-saffron/20 px-6 py-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-saffron/20 flex items-center justify-center">
@@ -585,8 +478,8 @@ export default function AdmissionPage() {
                       type="text"
                       data-ocid="admission.idproof_input"
                       placeholder="XXXX XXXX XXXX (Aadhar) या XXXXX0000X (PAN)"
-                      value={idProof}
-                      onChange={(e) => setIdProof(e.target.value)}
+                      value={idProofNumber}
+                      onChange={(e) => setIdProofNumber(e.target.value)}
                       required
                       minLength={8}
                       className="font-body border-saffron/30 focus:border-saffron focus-visible:ring-saffron/30 h-11"
@@ -603,7 +496,6 @@ export default function AdmissionPage() {
                       आधार कार्ड / PAN कार्ड की फोटो या PDF अपलोड करें
                     </p>
 
-                    {/* Hidden file input */}
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -613,7 +505,6 @@ export default function AdmissionPage() {
                       aria-label="ID Proof फ़ाइल चुनें"
                     />
 
-                    {/* Dropzone */}
                     <div
                       data-ocid="admission.idproof_dropzone"
                       onDrop={handleDrop}
@@ -647,7 +538,6 @@ export default function AdmissionPage() {
                               type="button"
                               onClick={() => {
                                 setIdProofFile(null);
-                                setUploadProgress(0);
                                 if (fileInputRef.current)
                                   fileInputRef.current.value = "";
                               }}
@@ -688,36 +578,11 @@ export default function AdmissionPage() {
                         )}
                       </div>
                     </div>
-
-                    {/* Upload progress bar (only visible while submitting) */}
-                    <AnimatePresence>
-                      {submitMutation.isPending && idProofFile && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="space-y-1.5"
-                        >
-                          <div className="flex items-center justify-between">
-                            <p className="font-hindi text-xs text-muted-foreground">
-                              अपलोड हो रहा है...
-                            </p>
-                            <p className="font-body text-xs font-semibold text-saffron-deep">
-                              {uploadProgress}%
-                            </p>
-                          </div>
-                          <Progress
-                            value={uploadProgress}
-                            className="h-2 bg-saffron/15 [&>div]:bg-saffron"
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
 
                   {/* Error state */}
                   <AnimatePresence>
-                    {(formError || submitMutation.isError) && (
+                    {formError && (
                       <motion.div
                         initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -727,8 +592,7 @@ export default function AdmissionPage() {
                       >
                         <X className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
                         <p className="font-hindi text-sm text-destructive">
-                          {formError ||
-                            "फॉर्म जमा करने में समस्या हुई। कृपया दोबारा प्रयास करें।"}
+                          {formError}
                         </p>
                       </motion.div>
                     )}
@@ -738,10 +602,10 @@ export default function AdmissionPage() {
                   <Button
                     type="submit"
                     data-ocid="admission.submit_button"
-                    disabled={submitMutation.isPending}
+                    disabled={isSubmitting}
                     className="w-full bg-saffron hover:bg-saffron-deep text-white font-hindi font-bold py-6 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-saffron text-base mt-2"
                   >
-                    {submitMutation.isPending ? (
+                    {isSubmitting ? (
                       <>
                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                         जमा हो रहा है...
@@ -823,42 +687,43 @@ export default function AdmissionPage() {
                 </a>
               </div>
             </motion.div>
+
+            {/* Back to home */}
+            <div className="mt-6 text-center">
+              <Link
+                to="/"
+                className="font-hindi text-sm text-saffron-deep hover:text-saffron transition-colors"
+              >
+                ← मुख्य पृष्ठ पर जाएं
+              </Link>
+            </div>
           </motion.div>
         </div>
+
+        {/* Footer */}
+        <footer className="mt-12 bg-foreground text-background/70 py-8 px-4 sm:px-6 text-center">
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="font-hindi text-xs text-background/40">
+              © {new Date().getFullYear()} Free Yoga Class Hanumangarh
+            </p>
+            <p className="font-body text-xs text-background/40">
+              Built with ❤️ using{" "}
+              <a
+                href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-saffron transition-colors underline underline-offset-2"
+              >
+                caffeine.ai
+              </a>
+            </p>
+          </div>
+        </footer>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-foreground text-background/70 py-8 px-4 sm:px-6 text-center">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="font-hindi text-xs text-background/40">
-            © {new Date().getFullYear()} Free Yoga Class Hanumangarh
-          </p>
-          <p className="font-body text-xs text-background/40">
-            Built with ❤️ using{" "}
-            <a
-              href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-saffron transition-colors underline underline-offset-2"
-            >
-              caffeine.ai
-            </a>
-          </p>
-        </div>
-      </footer>
-
-      {/* Success Dialog */}
-      {successCode && (
-        <SuccessDialog
-          open={!!successCode}
-          yogaCode={successCode}
-          onClose={handleClose}
-        />
-      )}
 
       {/* Loading overlay */}
       <AnimatePresence>
-        {submitMutation.isPending && (
+        {isSubmitting && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -876,13 +741,16 @@ export default function AdmissionPage() {
         )}
       </AnimatePresence>
 
-      {/* Scroll to top */}
-      <div
-        className="absolute bottom-2 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none"
-        aria-hidden
-      >
-        <ChevronDown className="w-4 h-4" />
-      </div>
+      {/* Success Dialog */}
+      {successCode && (
+        <SuccessDialog
+          open={!!successCode}
+          yogaCode={successCode}
+          onClose={handleClose}
+        />
+      )}
+
+      <BottomNav />
     </>
   );
 }

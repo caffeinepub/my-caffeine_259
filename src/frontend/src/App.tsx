@@ -23,16 +23,8 @@ import {
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
-import { useActor } from "./hooks/useActor";
-import { useAddCamp, useGetAllCamps } from "./hooks/useQueries";
-
-const CAMP_DATA = {
-  name: "निःशुल्क योग कक्षाएं हनुमानगढ़",
-  location: "अम्बेडकर भवन, करनी चौक के पास, हनुमानगढ़ जंक्शन",
-  timing: "प्रतिदिन सुबह 5:00 बजे",
-  instructor: "श्री रतिराम जी सहारण",
-};
+import { useEffect, useState } from "react";
+import { BottomNav } from "./components/BottomNav";
 
 const PHOTOS = [
   {
@@ -182,10 +174,18 @@ function NavBar({
         <a
           href="#hero"
           data-ocid="nav.link"
-          className="flex items-center gap-2 group"
+          className="flex items-center gap-2.5 group"
           aria-label="मुख्य पृष्ठ"
         >
-          <OMSymbol className="text-saffron text-2xl group-hover:scale-110 transition-transform" />
+          <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0 shadow-md ring-2 ring-saffron/30 group-hover:ring-saffron/60 transition-all">
+            <img
+              src="/assets/generated/yoga-app-icon-transparent.dim_512x512.png"
+              alt="योग icon"
+              className="w-full h-full object-cover"
+              width={40}
+              height={40}
+            />
+          </div>
           <span className="font-hindi font-bold text-sm sm:text-base text-foreground leading-tight">
             <span
               className={`block ${scrolled ? "text-saffron-deep" : "text-white"} transition-colors`}
@@ -435,7 +435,7 @@ function HeroSection() {
             target="_blank"
             rel="noopener noreferrer"
             data-ocid="hero.primary_button"
-            className="flex items-center justify-center gap-2.5 bg-forest hover:bg-forest-light text-white font-body font-bold px-8 py-4 rounded-full transition-all shadow-forest hover:shadow-xl hover:scale-105 active:scale-95 text-base"
+            className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-forest hover:bg-forest-light text-white font-body font-bold px-8 py-4 rounded-full transition-all shadow-forest hover:shadow-xl hover:scale-105 active:scale-95 text-base min-h-[44px]"
           >
             <MessageCircle className="w-5 h-5" />
             तुषार वर्मा — WhatsApp
@@ -443,7 +443,7 @@ function HeroSection() {
           <a
             href="tel:+919024783339"
             data-ocid="hero.secondary_button"
-            className="flex items-center justify-center gap-2.5 bg-saffron hover:bg-saffron-deep text-white font-body font-bold px-8 py-4 rounded-full transition-all shadow-saffron hover:shadow-xl hover:scale-105 active:scale-95 text-base"
+            className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-saffron hover:bg-saffron-deep text-white font-body font-bold px-8 py-4 rounded-full transition-all shadow-saffron hover:shadow-xl hover:scale-105 active:scale-95 text-base min-h-[44px]"
           >
             <Phone className="w-5 h-5" />
             कॉल करें
@@ -451,7 +451,7 @@ function HeroSection() {
           <Link
             to="/admission"
             data-ocid="hero.admission_button"
-            className="flex items-center justify-center gap-2.5 bg-transparent hover:bg-gold/20 text-gold border-2 border-gold/60 hover:border-gold font-body font-bold px-8 py-4 rounded-full transition-all hover:shadow-xl hover:scale-105 active:scale-95 text-base backdrop-blur-sm"
+            className="w-full sm:w-auto flex items-center justify-center gap-2.5 bg-transparent hover:bg-gold/20 text-gold border-2 border-gold/60 hover:border-gold font-body font-bold px-8 py-4 rounded-full transition-all hover:shadow-xl hover:scale-105 active:scale-95 text-base backdrop-blur-sm min-h-[44px]"
           >
             <FileText className="w-5 h-5" />
             प्रवेश फॉर्म भरें
@@ -829,7 +829,7 @@ function GallerySection() {
       <div className="max-w-6xl mx-auto">
         <SectionTitle hindi="गैलरी" english="Photo Gallery" />
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {PHOTOS.map((photo, i) => (
             <motion.button
               key={photo.src}
@@ -1209,31 +1209,13 @@ function Footer() {
   );
 }
 
-function CampDataSeed() {
-  const { actor, isFetching } = useActor();
-  const { data: camps, isSuccess } = useGetAllCamps();
-  const addCamp = useAddCamp();
-  const seeded = useRef(false);
-
-  useEffect(() => {
-    if (!actor || isFetching || !isSuccess || seeded.current) return;
-    if (camps.length === 0) {
-      seeded.current = true;
-      addCamp.mutate(CAMP_DATA);
-    }
-  }, [actor, isFetching, isSuccess, camps, addCamp]);
-
-  return null;
-}
-
 export default function App() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
-      <CampDataSeed />
       <NavBar isMobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
-      <main>
+      <main className="pb-20 md:pb-0">
         <HeroSection />
         <ScheduleSection />
         <LocationSection />
@@ -1243,6 +1225,7 @@ export default function App() {
       </main>
       <Footer />
       <Toaster />
+      <BottomNav />
     </>
   );
 }
